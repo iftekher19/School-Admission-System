@@ -6,6 +6,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Register controllers
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddHostedService<HoldExpirationService>();
 
 // Read PostgreSQL connection string
@@ -32,5 +42,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+app.UseCors("FrontendPolicy");
 
 app.Run();
