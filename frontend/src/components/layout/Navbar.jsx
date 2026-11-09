@@ -1,32 +1,36 @@
 import { Link, NavLink } from "react-router-dom";
-import { FaGraduationCap } from "react-icons/fa";
+import { FaGraduationCap, FaClipboardList } from "react-icons/fa";
 
-function Navbar() {
-  const navClass = ({ isActive }) =>
-    `btn btn-ghost btn-sm ${
-      isActive ? "text-primary" : ""
-    }`;
+export default function Navbar() {
+  const linkClass = ({ isActive }) =>
+    `btn btn-ghost btn-sm ${isActive ? "bg-primary/10 text-primary" : ""}`;
 
   return (
-    <div className="navbar border-b border-base-300 bg-base-100 px-4 sm:px-8">
-      <div className="navbar-start">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold">
-          <FaGraduationCap className="text-2xl text-primary" />
-          School Admission
-        </Link>
-      </div>
+    <header className="border-b border-base-300 bg-base-100">
+      <div className="navbar mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="navbar-start">
+          <Link to="/" className="flex items-center gap-2">
+            <FaGraduationCap className="text-3xl text-primary" />
+            <div>
+              <p className="text-base font-bold">School Admission</p>
+              <p className="text-xs text-base-content/50">
+                Admission Portal
+              </p>
+            </div>
+          </Link>
+        </div>
 
-      <div className="navbar-end gap-2">
-        <NavLink to="/" end className={navClass}>
-          Classes
-        </NavLink>
+        <div className="navbar-end gap-2">
+          <NavLink to="/" end className={linkClass}>
+            Classes
+          </NavLink>
 
-        <NavLink to="/my-applications" className={navClass}>
-          My Applications
-        </NavLink>
+          <NavLink to="/my-applications" className={linkClass}>
+            <FaClipboardList />
+            My Applications
+          </NavLink>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
-
-export default Navbar;
