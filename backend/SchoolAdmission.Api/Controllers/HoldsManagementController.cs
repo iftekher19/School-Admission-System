@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Models;
-
+using SchoolAdmission.Api.Helpers;
 namespace SchoolAdmission.Api.Controllers;
 
 [ApiController]
@@ -61,11 +61,11 @@ public async Task<IActionResult> GetHold(Guid holdId)
         Guid holdId,
         [FromHeader(Name = "X-Student-Id")] string? studentId)
     {
-        if (string.IsNullOrWhiteSpace(studentId))
+        if (!StudentIdValidator.IsValid(studentId))
         {
             return BadRequest(new
             {
-                message = "X-Student-Id header is required."
+                message = "X-Student-Id must contain exactly 17 numeric digits."
             });
         }
 
@@ -162,11 +162,11 @@ public async Task<IActionResult> GetHold(Guid holdId)
         Guid holdId,
         [FromHeader(Name = "X-Student-Id")] string? studentId)
     {
-        if (string.IsNullOrWhiteSpace(studentId))
+        if (!StudentIdValidator.IsValid(studentId))
         {
             return BadRequest(new
             {
-                message = "X-Student-Id header is required."
+                message = "X-Student-Id must contain exactly 17 numeric digits."
             });
         }
 

@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
+import StudentIdentity from "./StudentIdentity";
 
 export default function MainLayout() {
   return (
@@ -7,6 +8,7 @@ export default function MainLayout() {
       <Navbar />
 
       <main className="mx-auto min-h-[calc(100vh-65px)] max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <StudentIdentity />
         <Outlet />
       </main>
     </div>

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolAdmission.Api.Contracts.Holds;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Models;
+using SchoolAdmission.Api.Helpers;
 
 namespace SchoolAdmission.Api.Controllers;
 
@@ -22,21 +23,11 @@ public class MeController : ControllerBase
     public async Task<IActionResult> GetMyHolds(
         [FromHeader(Name = "X-Student-Id")] string? studentId)
     {
-        if (string.IsNullOrWhiteSpace(studentId))
+        if (!StudentIdValidator.IsValid(studentId))
         {
             return BadRequest(new
             {
-                message = "X-Student-Id header is required."
-            });
-        }
-
-        studentId = studentId.Trim();
-
-        if (studentId.Length > 30)
-        {
-            return BadRequest(new
-            {
-                message = "Student ID cannot exceed 30 characters."
+                message = "X-Student-Id must contain exactly 17 numeric digits."
             });
         }
 

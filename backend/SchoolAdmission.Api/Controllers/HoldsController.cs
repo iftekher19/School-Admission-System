@@ -4,7 +4,7 @@ using Npgsql;
 using SchoolAdmission.Api.Contracts.Holds;
 using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Models;
-
+using SchoolAdmission.Api.Helpers;
 namespace SchoolAdmission.Api.Controllers;
 
 [ApiController]
@@ -28,22 +28,12 @@ public class HoldsController : ControllerBase
         Guid classId,
         [FromHeader(Name = "X-Student-Id")] string? studentId)
     {
-        // 1. Validate student ID
-        if (string.IsNullOrWhiteSpace(studentId))
+        // 1. Validate the 17-digit student registration number.
+        if (!StudentIdValidator.IsValid(studentId))
         {
             return BadRequest(new
             {
-                message = "X-Student-Id header is required."
-            });
-        }
-
-        studentId = studentId.Trim();
-
-        if (studentId.Length > 30)
-        {
-            return BadRequest(new
-            {
-                message = "Student ID cannot exceed 30 characters."
+                message = "X-Student-Id must contain exactly 17 numeric digits."
             });
         }
 
