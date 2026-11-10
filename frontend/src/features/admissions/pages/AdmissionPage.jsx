@@ -1,5 +1,7 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+
 import {
   confirmAdmission,
   createAdmissionHold,
@@ -7,11 +9,15 @@ import {
   getHoldStatus,
 } from "../services/admissionService";
 
+import { useStudent } from "../../../app/StudentContext";
+import { useLanguage } from "../../../app/LanguageContext";
+
 export default function AdmissionPage() {
   const { classId } = useParams();
+  const { studentId, isValidStudentId } = useStudent();
+  const { language, t } = useLanguage();
 
   const [schoolClass, setSchoolClass] = useState(null);
-  const [studentId, setStudentId] = useState("");
   const [hold, setHold] = useState(null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -24,31 +30,32 @@ export default function AdmissionPage() {
     setSchoolClass(data);
   }, [classId]);
 
-  // Load selected class
   useEffect(() => {
     const loadClass = async () => {
       try {
         setLoading(true);
         setError("");
         await refreshClass();
-      } catch (err) {
-        setError(err.message || "Unable to load class details.");
+      } catch {
+        setError(t("unableToLoadDetails"));
       } finally {
         setLoading(false);
       }
     };
 
     loadClass();
-  }, [refreshClass]);
+  }, [refreshClass, t]);
 
-  // Update countdown every second
+  // Update countdown every second.
   useEffect(() => {
     if (!hold || hold.status !== "HELD") return;
 
     const updateCountdown = () => {
       const remaining = Math.max(
         0,
-        Math.ceil((new Date(hold.expiresAt).getTime() - Date.now()) / 1000)
+        Math.ceil(
+          (new Date(hold.expiresAt).getTime() - Date.now()) / 1000
+        )
       );
 
       setRemainingSeconds(remaining);
@@ -61,7 +68,7 @@ export default function AdmissionPage() {
     return () => clearInterval(timer);
   }, [hold]);
 
-  // Check hold status periodically
+  // Check hold status periodically.
   useEffect(() => {
     if (!hold || hold.status !== "HELD") return;
 
@@ -82,8 +89,8 @@ export default function AdmissionPage() {
   const handleReserveSeat = async (event) => {
     event.preventDefault();
 
-    if (!studentId.trim()) {
-      setError("Please enter your Student ID.");
+    if (!isValidStudentId) {
+      setError(t("enterStudentIdError"));
       return;
     }
 
@@ -92,17 +99,14 @@ export default function AdmissionPage() {
       setError("");
       setSuccess("");
 
-      const result = await createAdmissionHold(
-        classId,
-        studentId.trim()
-      );
+      const result = await createAdmissionHold(classId, studentId);
 
       setHold(result);
       await refreshClass();
 
-      setSuccess("Your seat has been temporarily reserved.");
+      setSuccess(t("seatReserved"));
     } catch (err) {
-      setError(err.message || "Unable to reserve your seat.");
+      setError(err.message || t("unableToReserve"));
     } finally {
       setSubmitting(false);
     }
@@ -118,10 +122,7 @@ export default function AdmissionPage() {
       setError("");
       setSuccess("");
 
-      const result = await confirmAdmission(
-        hold.holdId,
-        studentId.trim()
-      );
+      const result = await confirmAdmission(hold.holdId, studentId);
 
       setHold((previous) => ({
         ...previous,
@@ -130,11 +131,10 @@ export default function AdmissionPage() {
 
       await refreshClass();
 
-      setSuccess("Admission confirmed successfully!");
+      setSuccess(t("admissionConfirmedMessage"));
     } catch (err) {
-      setError(err.message || "Unable to confirm admission.");
+      setError(err.message || t("unableToConfirm"));
 
-      // Refresh status in case the hold expired during confirmation.
       try {
         const latestHold = await getHoldStatus(hold.holdId);
         setHold(latestHold);
@@ -159,10 +159,23 @@ export default function AdmissionPage() {
     hold?.status === "EXPIRED" ||
     (hold?.status === "HELD" && remainingSeconds <= 0);
 
+  const formatStatus = (status) => {
+    if (language === "en") return isExpired ? "EXPIRED" : status;
+
+    const labels = {
+      HELD: "সংরক্ষিত",
+      CONFIRMED: "নিশ্চিত",
+      EXPIRED: "মেয়াদ শেষ",
+      CANCELLED: "বাতিল",
+    };
+
+    return labels[isExpired ? "EXPIRED" : status] || status;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <span className="loading loading-spinner loading-lg text-primary" />
       </div>
     );
   }
@@ -170,7 +183,7 @@ export default function AdmissionPage() {
   if (!schoolClass) {
     return (
       <div className="alert alert-error">
-        {error || "Class not found."}
+        {error || t("classNotFound")}
       </div>
     );
   }
@@ -178,9 +191,11 @@ export default function AdmissionPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Admission Application</h1>
+        <h1 className="text-3xl font-bold">
+          {t("admissionApplication")}
+        </h1>
         <p className="mt-2 text-base-content/60">
-          Reserve your seat and confirm your admission before the hold expires.
+          {t("reserveAndConfirm")}
         </p>
       </div>
 
@@ -191,14 +206,18 @@ export default function AdmissionPage() {
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
-              <p className="text-sm text-base-content/60">Total Seats</p>
+              <p className="text-sm text-base-content/60">
+                {t("totalSeatsLabel")}
+              </p>
               <p className="text-2xl font-bold">
                 {schoolClass.totalSeats}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-base-content/60">Held Seats</p>
+              <p className="text-sm text-base-content/60">
+                {t("heldSeats")}
+              </p>
               <p className="text-2xl font-bold text-warning">
                 {schoolClass.heldSeats}
               </p>
@@ -206,7 +225,7 @@ export default function AdmissionPage() {
 
             <div>
               <p className="text-sm text-base-content/60">
-                Confirmed Seats
+                {t("confirmedSeats")}
               </p>
               <p className="text-2xl font-bold text-success">
                 {schoolClass.confirmedSeats}
@@ -215,7 +234,7 @@ export default function AdmissionPage() {
 
             <div>
               <p className="text-sm text-base-content/60">
-                Available Seats
+                {t("availableSeatsLabel")}
               </p>
               <p className="text-2xl font-bold text-primary">
                 {schoolClass.availableSeats}
@@ -227,13 +246,13 @@ export default function AdmissionPage() {
 
       {/* Error and success messages */}
       {error && (
-        <div className="alert alert-error">
+        <div role="alert" className="alert alert-error">
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success">
+        <div role="status" className="alert alert-success">
           <span>{success}</span>
         </div>
       )}
@@ -245,38 +264,44 @@ export default function AdmissionPage() {
           className="card border border-base-300 bg-base-100 shadow-sm"
         >
           <div className="card-body">
-            <h2 className="card-title">Reserve Your Seat</h2>
+            <h2 className="card-title">{t("reserveYourSeat")}</h2>
 
-            <label className="form-control w-full">
-              <span className="label-text mb-2 font-medium">
-                Student ID
-              </span>
-
-              <input
-                type="text"
-                placeholder="Enter your Student ID"
-                className="input input-bordered w-full"
-                value={studentId}
-                onChange={(event) => setStudentId(event.target.value)}
-                required
-              />
-            </label>
+            <div className="rounded-lg bg-base-200 p-3">
+              <p className="text-sm text-base-content/60">
+                {t("studentId")}
+              </p>
+              <p className="font-semibold">
+                {isValidStudentId
+                  ? studentId
+                  : t("enterStudentId")}
+              </p>
+            </div>
 
             <button
               type="submit"
               className="btn btn-primary mt-3"
-              disabled={submitting || schoolClass.availableSeats <= 0}
+              disabled={
+                submitting ||
+                !isValidStudentId ||
+                schoolClass.availableSeats <= 0
+              }
             >
               {submitting ? (
-                <span className="loading loading-spinner"></span>
+                <span className="loading loading-spinner" />
               ) : (
-                "Reserve Seat"
+                t("reserveSeat")
               )}
             </button>
 
+            {!isValidStudentId && (
+              <p className="text-sm text-error">
+                {t("enterStudentIdError")}
+              </p>
+            )}
+
             {schoolClass.availableSeats <= 0 && (
               <p className="text-sm text-error">
-                No seats are currently available.
+                {t("noSeatsAvailable")}
               </p>
             )}
           </div>
@@ -287,42 +312,47 @@ export default function AdmissionPage() {
       {hold && (
         <div className="card border border-base-300 bg-base-100 shadow-sm">
           <div className="card-body">
-            <h2 className="card-title">Admission Reservation</h2>
+            <h2 className="card-title">
+              {t("admissionReservation")}
+            </h2>
 
             <div className="space-y-3 text-sm">
               <p>
-                <strong>Student ID:</strong> {hold.studentId || studentId}
+                <strong>{t("studentId")}:</strong>{" "}
+                {hold.studentId || studentId}
               </p>
 
               <p>
-                <strong>Hold ID:</strong> {hold.holdId}
+                <strong>{t("holdId")}:</strong> {hold.holdId}
               </p>
 
               <p>
-                <strong>Status:</strong>{" "}
+                <strong>{t("status")}:</strong>{" "}
                 <span
                   className={`badge ${
                     hold.status === "CONFIRMED"
                       ? "badge-success"
                       : hold.status === "HELD"
-                      ? "badge-warning"
-                      : "badge-error"
+                        ? isExpired ? "badge-error" : "badge-warning"
+                        : "badge-error"
                   }`}
                 >
-                  {isExpired ? "EXPIRED" : hold.status}
+                  {formatStatus(hold.status)}
                 </span>
               </p>
 
               <p>
-                <strong>Expires At:</strong>{" "}
-                {new Date(hold.expiresAt).toLocaleString()}
+                <strong>{t("expiresAt")}:</strong>{" "}
+                {new Date(hold.expiresAt).toLocaleString(
+                  language === "bn" ? "bn-BD" : "en-US"
+                )}
               </p>
             </div>
 
             {hold.status === "HELD" && !isExpired && (
               <div className="mt-4 rounded-lg bg-warning/10 p-4 text-center">
                 <p className="text-sm text-base-content/70">
-                  Time remaining to confirm admission
+                  {t("timeRemaining")}
                 </p>
 
                 <p className="mt-1 text-3xl font-bold tabular-nums">
@@ -338,28 +368,28 @@ export default function AdmissionPage() {
                 disabled={submitting || isExpired}
               >
                 {submitting ? (
-                  <span className="loading loading-spinner"></span>
+                  <span className="loading loading-spinner" />
                 ) : (
-                  "Pay Admission Fee"
+                  t("payAdmissionFee")
                 )}
               </button>
             )}
 
             {hold.status === "CONFIRMED" && (
               <div className="alert alert-success mt-4">
-                Your admission has been confirmed.
+                {t("admissionConfirmed")}
               </div>
             )}
 
             {isExpired && (
               <div className="alert alert-error mt-4">
-                Your reservation has expired. You can no longer confirm this hold.
+                {t("reservationExpired")}
               </div>
             )}
 
             {hold.status === "CANCELLED" && (
               <div className="alert alert-warning mt-4">
-                This reservation has been cancelled.
+                {t("reservationCancelled")}
               </div>
             )}
           </div>

@@ -21,7 +21,7 @@ export default function Navbar() {
                 {t("appName")}
               </p>
               <p className="text-xs text-base-content/50">
-                {language === "en" ? "Admission Portal" : "ভর্তি পোর্টাল"}
+                {language === "en" ? "Admission Portal" : "Admission Portal"}
               </p>
             </div>
           </Link>

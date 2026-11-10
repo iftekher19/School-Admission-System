@@ -3,23 +3,48 @@ services:
     image: postgres:16-alpine
     container_name: school-admission-db
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: school_admission_db
       POSTGRES_USER: school_admin
       POSTGRES_PASSWORD: school_dev_password
-
     ports:
       - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U school_admin -d school_admission_db"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build:
+      context: ./backend/SchoolAdmission.Api
+      dockerfile: Dockerfile
+    container_name: school-admission-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=school_admission_db;Username=school_admin;Password=school_dev_password"
+      HOLD_DURATION_SECONDS: 600
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080
+    container_name: school-admission-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

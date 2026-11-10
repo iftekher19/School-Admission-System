@@ -1,9 +1,17 @@
+
 import { useCallback, useEffect, useState } from "react";
-import { getMyApplications, cancelApplication } from "../services/applicationService";
+import {
+  getMyApplications,
+  cancelApplication,
+} from "../services/applicationService";
+
+import { useStudent } from "../../../app/StudentContext";
+import { useLanguage } from "../../../app/LanguageContext";
 
 export default function MyApplicationsPage() {
-  const [studentId, setStudentId] = useState("");
-  const [searchedId, setSearchedId] = useState("");
+  const { studentId, isValidStudentId } = useStudent();
+  const { language, t } = useLanguage();
+
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -14,42 +22,42 @@ export default function MyApplicationsPage() {
       const data = await getMyApplications(id);
       setApplications(Array.isArray(data) ? data : []);
       setError("");
-    } catch (err) {
-      setError(err.message || "Unable to load applications.");
+    } catch {
+      setError(t("unableToLoadApplications"));
     }
-  }, []);
+  }, [t]);
 
-  const handleSearch = async (event) => {
-    event.preventDefault();
-
-    const id = studentId.trim();
-
-    if (!id) {
-      setError("Please enter your Student ID.");
+  useEffect(() => {
+    if (!isValidStudentId) {
+      setApplications([]);
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setSearchedId(id);
+    let active = true;
 
-    await loadApplications(id);
+    const load = async () => {
+      setLoading(true);
+      await loadApplications(studentId);
+      if (active) setLoading(false);
+    };
 
-    setLoading(false);
-  };
+    load();
 
-  // Refresh application statuses periodically.
+    return () => {
+      active = false;
+    };
+  }, [studentId, isValidStudentId, loadApplications]);
+
   useEffect(() => {
-    if (!searchedId) return;
+    if (!isValidStudentId) return;
 
     const interval = setInterval(() => {
-      loadApplications(searchedId);
+      loadApplications(studentId);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [searchedId, loadApplications]);
+  }, [studentId, isValidStudentId, loadApplications]);
 
-  // Update countdown every second.
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(Date.now());
@@ -59,17 +67,13 @@ export default function MyApplicationsPage() {
   }, []);
 
   const handleCancel = async (holdId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this reservation?"
-    );
-
-    if (!confirmed) return;
+    if (!window.confirm(t("confirmCancel"))) return;
 
     try {
-      await cancelApplication(holdId, searchedId);
-      await loadApplications(searchedId);
-    } catch (err) {
-      setError(err.message || "Unable to cancel reservation.");
+      await cancelApplication(holdId, studentId);
+      await loadApplications(studentId);
+    } catch {
+      setError(t("unableToCancel"));
     }
   };
 
@@ -96,6 +100,17 @@ export default function MyApplicationsPage() {
     return application.status;
   };
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      HELD: language === "en" ? "HELD" : "সংরক্ষিত",
+      CONFIRMED: language === "en" ? "CONFIRMED" : "নিশ্চিত",
+      EXPIRED: language === "en" ? "EXPIRED" : "মেয়াদ শেষ",
+      CANCELLED: language === "en" ? "CANCELLED" : "বাতিল",
+    };
+
+    return labels[status] || status;
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       HELD: "badge-warning",
@@ -106,7 +121,7 @@ export default function MyApplicationsPage() {
 
     return (
       <span className={`badge ${styles[status] || "badge-ghost"}`}>
-        {status}
+        {getStatusLabel(status)}
       </span>
     );
   };
@@ -114,74 +129,48 @@ export default function MyApplicationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">My Applications</h1>
+        <h1 className="text-3xl font-bold">{t("myApplications")}</h1>
         <p className="mt-2 text-base-content/60">
-          View your admission reservation history and application status.
+          {t("viewHistory")}
         </p>
       </div>
 
-      {/* Student ID search */}
-      <form
-        onSubmit={handleSearch}
-        className="card border border-base-300 bg-base-100 shadow-sm"
-      >
-        <div className="card-body">
-          <label className="form-control w-full">
-            <span className="label-text mb-2 font-medium">
-              Student ID
-            </span>
-
-            <input
-              type="text"
-              placeholder="Enter your Student ID"
-              className="input input-bordered w-full"
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="btn btn-primary mt-2"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="loading loading-spinner"></span>
-            ) : (
-              "View Applications"
-            )}
-          </button>
+      {!isValidStudentId && (
+        <div className="alert alert-warning">
+          {t("enterStudentId")}
         </div>
-      </form>
+      )}
 
       {error && (
-        <div className="alert alert-error">
+        <div role="alert" className="alert alert-error">
           <span>{error}</span>
         </div>
       )}
 
-      {/* Application history */}
-      {searchedId && !loading && (
+      {isValidStudentId && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-semibold">
-              Applications for {searchedId}
+              {t("applicationsFor")} {studentId}
             </h2>
 
             <span className="badge badge-outline">
-              {applications.length} Applications
+              {applications.length} {t("applications")}
             </span>
           </div>
 
-          {applications.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <span className="loading loading-spinner loading-lg text-primary" />
+            </div>
+          ) : applications.length === 0 ? (
             <div className="card border border-base-300 bg-base-100">
               <div className="card-body items-center text-center">
                 <h3 className="text-lg font-semibold">
-                  No Applications Found
+                  {t("noApplications")}
                 </h3>
                 <p className="text-base-content/60">
-                  You haven't made any admission reservations yet.
+                  {t("noReservations")}
                 </p>
               </div>
             </div>
@@ -203,7 +192,7 @@ export default function MyApplicationsPage() {
                           </h3>
 
                           <p className="mt-1 text-sm text-base-content/60">
-                            Hold ID: {application.holdId}
+                            {t("holdId")}: {application.holdId}
                           </p>
                         </div>
 
@@ -213,19 +202,19 @@ export default function MyApplicationsPage() {
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         <div>
                           <p className="text-sm text-base-content/60">
-                            Student ID
+                            {t("studentId")}
                           </p>
-                          <p className="font-medium">
-                            {searchedId}
-                          </p>
+                          <p className="font-medium">{studentId}</p>
                         </div>
 
                         <div>
                           <p className="text-sm text-base-content/60">
-                            Expiration Time
+                            {t("expirationTime")}
                           </p>
                           <p className="font-medium">
-                            {new Date(application.expiresAt).toLocaleString()}
+                            {new Date(application.expiresAt).toLocaleString(
+                              language === "bn" ? "bn-BD" : "en-US"
+                            )}
                           </p>
                         </div>
                       </div>
@@ -234,7 +223,7 @@ export default function MyApplicationsPage() {
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-warning/10 p-3">
                           <div>
                             <p className="text-sm text-base-content/60">
-                              Time remaining
+                              {t("timeRemainingLabel")}
                             </p>
                             <p className="text-xl font-bold tabular-nums">
                               {formatTime(application.expiresAt)}
@@ -243,30 +232,28 @@ export default function MyApplicationsPage() {
 
                           <button
                             className="btn btn-outline btn-error btn-sm"
-                            onClick={() =>
-                              handleCancel(application.holdId)
-                            }
+                            onClick={() => handleCancel(application.holdId)}
                           >
-                            Cancel Reservation
+                            {t("cancelReservation")}
                           </button>
                         </div>
                       )}
 
                       {status === "CONFIRMED" && (
                         <div className="alert alert-success mt-3">
-                          Admission confirmed successfully.
+                          {t("admissionConfirmedMessage")}
                         </div>
                       )}
 
                       {status === "EXPIRED" && (
                         <div className="alert alert-error mt-3">
-                          This reservation has expired.
+                          {t("reservationExpiredMessage")}
                         </div>
                       )}
 
                       {status === "CANCELLED" && (
                         <div className="alert alert-warning mt-3">
-                          This reservation has been cancelled.
+                          {t("reservationCancelledMessage")}
                         </div>
                       )}
                     </div>
