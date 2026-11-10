@@ -1,5 +1,8 @@
+
 import { useForm } from "react-hook-form";
 import { FaTimes } from "react-icons/fa";
+
+import { useLanguage } from "../../../app/LanguageContext";
 
 export default function CreateClassModal({
   isOpen,
@@ -7,6 +10,8 @@ export default function CreateClassModal({
   onCreate,
   submitting,
 }) {
+  const { t } = useLanguage();
+
   const {
     register,
     handleSubmit,
@@ -38,9 +43,11 @@ export default function CreateClassModal({
       <div className="modal-box max-w-lg">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold">Create New Class</h3>
+            <h3 className="text-xl font-bold">
+              {t("createNewClass")}
+            </h3>
             <p className="mt-1 text-sm text-base-content/60">
-              Add a class and configure its admission capacity.
+              {t("configureCapacity")}
             </p>
           </div>
 
@@ -48,7 +55,7 @@ export default function CreateClassModal({
             type="button"
             onClick={onClose}
             className="btn btn-circle btn-ghost btn-sm"
-            aria-label="Close modal"
+            aria-label={t("close")}
           >
             <FaTimes />
           </button>
@@ -57,24 +64,26 @@ export default function CreateClassModal({
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-5">
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-semibold">Class name</span>
+              <span className="label-text font-semibold">
+                {t("className")}
+              </span>
             </label>
 
             <input
               type="text"
-              placeholder="Example: Class One"
+              placeholder={t("classNamePlaceholder")}
               className={`input input-bordered w-full ${
                 errors.name ? "input-error" : ""
               }`}
               {...register("name", {
-                required: "Class name is required.",
+                required: t("classNameRequired"),
                 minLength: {
                   value: 2,
-                  message: "Minimum 2 characters required.",
+                  message: t("minCharacters"),
                 },
                 maxLength: {
                   value: 150,
-                  message: "Maximum 150 characters allowed.",
+                  message: t("maxCharacters"),
                 },
               })}
             />
@@ -88,7 +97,9 @@ export default function CreateClassModal({
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-semibold">Total seats</span>
+              <span className="label-text font-semibold">
+                {t("totalSeats")}
+              </span>
             </label>
 
             <input
@@ -99,15 +110,15 @@ export default function CreateClassModal({
                 errors.totalSeats ? "input-error" : ""
               }`}
               {...register("totalSeats", {
-                required: "Seat capacity is required.",
+                required: t("seatCapacityRequired"),
                 valueAsNumber: true,
                 min: {
                   value: 1,
-                  message: "At least one seat is required.",
+                  message: t("atLeastOneSeat"),
                 },
                 max: {
                   value: 10000,
-                  message: "Maximum 10,000 seats allowed.",
+                  message: t("maxSeats"),
                 },
               })}
             />
@@ -126,7 +137,7 @@ export default function CreateClassModal({
               className="btn btn-ghost"
               disabled={submitting}
             >
-              Cancel
+              {t("cancel")}
             </button>
 
             <button
@@ -137,10 +148,10 @@ export default function CreateClassModal({
               {submitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm" />
-                  Creating...
+                  {t("creating")}
                 </>
               ) : (
-                "Create Class"
+                t("createClass")
               )}
             </button>
           </div>
@@ -148,7 +159,7 @@ export default function CreateClassModal({
       </div>
 
       <div className="modal-backdrop" onClick={onClose}>
-        <button type="button">Close</button>
+        <button type="button">{t("close")}</button>
       </div>
     </div>
   );

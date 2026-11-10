@@ -1,34 +1,51 @@
+
 import { Link, NavLink } from "react-router-dom";
-import { FaGraduationCap, FaClipboardList } from "react-icons/fa";
+import { FaGraduationCap, FaClipboardList, FaGlobe } from "react-icons/fa";
+import { useLanguage } from "../../app/LanguageContext";
 
 export default function Navbar() {
+  const { language, toggleLanguage, t } = useLanguage();
+
   const linkClass = ({ isActive }) =>
     `btn btn-ghost btn-sm ${isActive ? "bg-primary/10 text-primary" : ""}`;
 
   return (
     <header className="border-b border-base-300 bg-base-100">
-      <div className="navbar mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="navbar mx-auto max-w-7xl flex-wrap px-4 sm:px-6">
         <div className="navbar-start">
           <Link to="/" className="flex items-center gap-2">
             <FaGraduationCap className="text-3xl text-primary" />
+
             <div>
-              <p className="text-base font-bold">School Admission</p>
+              <p className="text-base font-bold">
+                {t("appName")}
+              </p>
               <p className="text-xs text-base-content/50">
-                Admission Portal
+                {language === "en" ? "Admission Portal" : "ভর্তি পোর্টাল"}
               </p>
             </div>
           </Link>
         </div>
 
-        <div className="navbar-end gap-2">
+        <div className="navbar-end flex-wrap gap-1">
           <NavLink to="/" end className={linkClass}>
-            Classes
+            {language === "en" ? "Classes" : "শ্রেণিসমূহ"}
           </NavLink>
 
           <NavLink to="/my-applications" className={linkClass}>
             <FaClipboardList />
-            My Applications
+            {t("myApplications")}
           </NavLink>
+
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="btn btn-outline btn-primary btn-sm"
+            aria-label="Switch language"
+          >
+            <FaGlobe />
+            {t("switchLanguage")}
+          </button>
         </div>
       </div>
     </header>

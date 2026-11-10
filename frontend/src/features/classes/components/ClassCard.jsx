@@ -1,7 +1,17 @@
+
 import { Link } from "react-router-dom";
-import { FaUsers, FaCheckCircle, FaClock, FaArrowRight } from "react-icons/fa";
+import {
+  FaUsers,
+  FaCheckCircle,
+  FaClock,
+  FaArrowRight,
+} from "react-icons/fa";
+
+import { useLanguage } from "../../../app/LanguageContext";
 
 export default function ClassCard({ schoolClass }) {
+  const { t } = useLanguage();
+
   const {
     id,
     name,
@@ -21,12 +31,12 @@ export default function ClassCard({ schoolClass }) {
           <div>
             <h2 className="card-title text-lg">{name}</h2>
             <p className="text-sm text-base-content/60">
-              Admission availability
+              {t("availability")}
             </p>
           </div>
 
           <div className="badge badge-primary badge-outline">
-            {availableSeats > 0 ? "Open" : "Full"}
+            {availableSeats > 0 ? t("open") : t("full")}
           </div>
         </div>
 
@@ -34,25 +44,31 @@ export default function ClassCard({ schoolClass }) {
           <div className="rounded-xl bg-base-200 p-3">
             <FaUsers className="mb-2 text-primary" />
             <p className="text-xl font-bold">{totalSeats}</p>
-            <p className="text-xs text-base-content/60">Total</p>
+            <p className="text-xs text-base-content/60">{t("total")}</p>
           </div>
 
           <div className="rounded-xl bg-warning/10 p-3">
             <FaClock className="mb-2 text-warning" />
             <p className="text-xl font-bold">{heldSeats}</p>
-            <p className="text-xs text-base-content/60">Held</p>
+            <p className="text-xs text-base-content/60">{t("held")}</p>
           </div>
 
           <div className="rounded-xl bg-success/10 p-3">
             <FaCheckCircle className="mb-2 text-success" />
             <p className="text-xl font-bold">{confirmedSeats}</p>
-            <p className="text-xs text-base-content/60">Confirmed</p>
+            <p className="text-xs text-base-content/60">
+              {t("confirmed")}
+            </p>
           </div>
         </div>
 
         <div className="flex justify-between text-sm">
-          <span className="text-base-content/60">Seat occupancy</span>
-          <span className="font-semibold">{Math.round(percentage)}%</span>
+          <span className="text-base-content/60">
+            {t("seatOccupancy")}
+          </span>
+          <span className="font-semibold">
+            {Math.round(percentage)}%
+          </span>
         </div>
 
         <progress
@@ -63,7 +79,9 @@ export default function ClassCard({ schoolClass }) {
 
         <div className="flex items-center justify-between pt-2">
           <div>
-            <p className="text-xs text-base-content/60">Available seats</p>
+            <p className="text-xs text-base-content/60">
+              {t("availableSeats")}
+            </p>
             <p className="text-2xl font-bold text-success">
               {availableSeats}
             </p>
@@ -80,7 +98,7 @@ export default function ClassCard({ schoolClass }) {
               if (availableSeats <= 0) event.preventDefault();
             }}
           >
-            Apply Now <FaArrowRight />
+            {t("applyNow")} <FaArrowRight />
           </Link>
         </div>
       </div>

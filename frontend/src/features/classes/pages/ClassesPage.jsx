@@ -1,15 +1,16 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { FaPlus, FaGraduationCap, FaSyncAlt } from "react-icons/fa";
 
-import {
-  createClass,
-  getClasses,
-} from "../services/classService";
+import { useLanguage } from "../../../app/LanguageContext";
+import { createClass, getClasses } from "../services/classService";
 
 import ClassCard from "../components/ClassCard";
 import CreateClassModal from "../components/CreateClassModal";
 
 export default function ClassesPage() {
+  const { t } = useLanguage();
+
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -22,12 +23,12 @@ export default function ClassesPage() {
       setError("");
       const data = await getClasses();
       setClasses(data);
-    } catch (err) {
-      setError(err.message || "Unable to load classes.");
+    } catch {
+      setError(t("unableToLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadClasses();
@@ -41,12 +42,12 @@ export default function ClassesPage() {
 
       await createClass(data);
 
-      setSuccess("Class created successfully.");
+      setSuccess(t("classCreated"));
       await loadClasses();
 
       return true;
-    } catch (err) {
-      setError(err.message || "Unable to create class.");
+    } catch {
+      setError(t("unableToCreate"));
       return false;
     } finally {
       setSubmitting(false);
@@ -70,22 +71,21 @@ export default function ClassesPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page heading */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2 text-primary">
             <FaGraduationCap />
             <span className="text-sm font-semibold uppercase tracking-wider">
-              Admission Management
+              {t("admissionManagement")}
             </span>
           </div>
 
           <h1 className="mt-2 text-3xl font-bold tracking-tight">
-            Class Management
+            {t("classManagement")}
           </h1>
 
           <p className="mt-2 text-base-content/60">
-            Manage classes and monitor admission availability.
+            {t("manageClasses")}
           </p>
         </div>
 
@@ -96,11 +96,10 @@ export default function ClassesPage() {
             setIsModalOpen(true);
           }}
         >
-          <FaPlus /> Create Class
+          <FaPlus /> {t("createClass")}
         </button>
       </section>
 
-      {/* Feedback */}
       {error && (
         <div role="alert" className="alert alert-error">
           <span>{error}</span>
@@ -108,7 +107,7 @@ export default function ClassesPage() {
             className="btn btn-ghost btn-xs"
             onClick={() => setError("")}
           >
-            Dismiss
+            {t("dismiss")}
           </button>
         </div>
       )}
@@ -119,34 +118,34 @@ export default function ClassesPage() {
         </div>
       )}
 
-      {/* Summary cards */}
       <section className="grid gap-4 sm:grid-cols-3">
         <SummaryCard
-          title="Total Classes"
+          title={t("totalClasses")}
           value={classes.length}
-          description="Registered classes"
+          description={t("registeredClasses")}
         />
 
         <SummaryCard
-          title="Total Capacity"
+          title={t("totalCapacity")}
           value={totalSeats}
-          description="Available admission capacity"
+          description={t("admissionCapacity")}
         />
 
         <SummaryCard
-          title="Confirmed Admissions"
+          title={t("confirmedAdmissions")}
           value={confirmedSeats}
-          description={`${availableSeats} seats currently available`}
+          description={`${availableSeats} ${t("seatsAvailable")}`}
         />
       </section>
 
-      {/* Class list */}
       <section>
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">Available Classes</h2>
+            <h2 className="text-xl font-bold">
+              {t("availableClasses")}
+            </h2>
             <p className="text-sm text-base-content/60">
-              Browse classes and their seat availability.
+              {t("browseClasses")}
             </p>
           </div>
 
@@ -156,7 +155,7 @@ export default function ClassesPage() {
             disabled={loading}
           >
             <FaSyncAlt />
-            Refresh
+            {t("refresh")}
           </button>
         </div>
 
@@ -168,15 +167,20 @@ export default function ClassesPage() {
           <div className="card border border-dashed border-base-300 bg-base-100">
             <div className="card-body items-center py-16 text-center">
               <FaGraduationCap className="text-4xl text-base-content/30" />
-              <h3 className="text-lg font-bold">No classes yet</h3>
+
+              <h3 className="text-lg font-bold">
+                {t("noClasses")}
+              </h3>
+
               <p className="text-sm text-base-content/60">
-                Create your first class to start accepting applications.
+                {t("createFirstClass")}
               </p>
+
               <button
                 className="btn btn-primary mt-3"
                 onClick={() => setIsModalOpen(true)}
               >
-                <FaPlus /> Create Class
+                <FaPlus /> {t("createClass")}
               </button>
             </div>
           </div>
